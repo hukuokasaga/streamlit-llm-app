@@ -45,7 +45,15 @@ def get_llm_response(user_input: str, expert_type: str) -> str:
         return result.content
     
     except Exception as e:
-        return f"エラーが発生しました: {str(e)}"
+        error_msg = str(e)
+        if "api_key" in error_msg.lower():
+            return "❌ APIキーに関するエラーが発生しました。APIキーが正しく設定されているか確認してください。"
+        elif "rate limit" in error_msg.lower():
+            return "⏰ API使用制限に達しました。しばらく待ってから再試行してください。"
+        elif "authentication" in error_msg.lower():
+            return "🔐 認証エラーが発生しました。APIキーが有効か確認してください。"
+        else:
+            return f"❌ エラーが発生しました: {error_msg}"
 
 def main():
     # ページ設定
@@ -153,8 +161,15 @@ def main():
 
 if __name__ == "__main__":
     # APIキーの確認
-    if not os.getenv("OPENAI_API_KEY"):
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
         st.error("⚠️ OpenAI APIキーが設定されていません。環境変数 `OPENAI_API_KEY` を設定してください。")
         st.stop()
+    elif api_key == "your_openai_api_key_here":
+        st.error("⚠️ OpenAI APIキーがデフォルト値のままです。実際のAPIキーに変更してください。")
+        st.stop()
+    else:
+        # APIキーが設定されていることを確認（最初の10文字のみ表示）
+        st.sidebar.success(f"✅ APIキー設定済み: {api_key[:10]}...")
     
     main()
